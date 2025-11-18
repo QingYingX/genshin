@@ -16,6 +16,30 @@ import User from '../../../plugins/miao-plugin/models/User.js'
 import MysApi from '../../../plugins/miao-plugin/models/MysApi.js'
 import Button from '../../../plugins/miao-plugin/models/Button.js'
 import { miaoPath } from '../../../plugins/miao-plugin/tools/path.js'
+import Artis from '../../../plugins/miao-plugin/models/artis/Artis.js'
+
+// 修复 Avatar.setAvatarBase 方法，防止 _mysArtis 未初始化导致的错误
+if (Avatar && Avatar.prototype) {
+  const originalSetAvatarBase = Avatar.prototype.setAvatarBase
+  Avatar.prototype.setAvatarBase = function(ds, source = "") {
+    // 如果 _mysArtis 未初始化，则初始化它
+    if (!this._mysArtis) {
+      const game = this.game || ds?.game || "gs"
+      this._mysArtis = new Artis(game)
+      // 如果 game 也未设置，则设置它
+      if (!this.game) {
+        this.game = game
+      }
+    }
+    // 如果 _artis 也未初始化，则初始化它
+    if (!this._artis) {
+      const game = this.game || ds?.game || "gs"
+      this._artis = new Artis(game, true)
+    }
+    // 调用原始方法
+    return originalSetAvatarBase.call(this, ds, source)
+  }
+}
 
 for (let game of ['gs', 'sr']) {
   for (let type of ['artifact', 'character', 'material', 'weapon']) {
